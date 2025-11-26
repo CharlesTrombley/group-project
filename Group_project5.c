@@ -15,7 +15,7 @@
 
 // All earthquakes worldwide for the past ~30 days (USGS)
 #define CSV_URL  "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.csv"
-#define CSV_FILE "C:\\Users\\charl\\Downloads\\all_month.csv"
+#define CSV_FILE "all_month.csv"
 
 double calc_cost(double m) { return m * 1000000.0; }
 
