@@ -1,3 +1,7 @@
+# ICS 265 : C Programming  
+
+<img src="logo.png" alt="Logo" width="50%">
+
 
 ## Project Team
 
