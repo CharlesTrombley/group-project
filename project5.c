@@ -82,7 +82,7 @@ static void enable_ansi_colors(void) {
 int main(void) {
     enable_ansi_colors();
 
-    printf("Program developed by team3\n");
+    printf("Program developed by team 1, Wayne, Charlie, Havi\n");
 
     // Download / refresh earthquakes.csv
     char cmd[512];
