@@ -20,7 +20,7 @@
 // All earthquakes worldwide for the past ~30 days (USGS)
 #define CSV_URL  "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.csv"
 // Use escaped backslashes for Windows paths and quote when used on the command line
-#define CSV_FILE "C:\\Users\\charl\\OneDrive\\Pictures\\Documents\\group project\\earthquakes.csv"
+#define CSV_FILE "C:\\Users\\charl\\OneDrive\\Pictures\\Documents\\newgroup_Project\\allmonth.csv"
 
 double calc_cost(double m) { return m * 1000000.0; }
 
