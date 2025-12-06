@@ -7,6 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <io.h>
+#define isatty _isatty
+#define fileno _fileno
+#else
+#include <unistd.h>
+#endif
+
 #define LINE 4096
 
 #define BLUE   "\033[1;34m"
@@ -79,8 +87,57 @@ static void enable_ansi_colors(void) {
 }
 #endif
 
-int main(void) {
+// Pause before exiting when running from an interactive console so
+// the user can read output when launching the .exe by double-click.
+static void wait_for_enter_if_console(void) {
+    if (isatty(fileno(stdin))) {
+        printf("\nPress Enter to exit...");
+        fflush(stdout);
+        int c = getchar();
+        (void)c;
+    }
+}
+
+static void sleep_seconds(int s) {
+#ifdef _WIN32
+    Sleep(s * 1000);
+#else
+    sleep(s);
+#endif
+}
+
+static void print_usage(void) {
+    printf("Usage: project5.exe [--hold N] [--wait] [--no-pause]\n");
+    printf("  --hold N   : keep program open for N seconds before exiting\n");
+    printf("  --wait     : wait for Enter before exiting (interactive)\n");
+    printf("  --no-pause : do not pause before exit (useful for scripting)\n");
+}
+
+int main(int argc, char **argv) {
     enable_ansi_colors();
+
+    int no_pause = 0;
+    int wait_enter = 0;
+    int hold_seconds = 0;
+
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--no-pause") == 0) {
+            no_pause = 1;
+        } else if (strcmp(argv[i], "--wait") == 0) {
+            wait_enter = 1;
+        } else if (strcmp(argv[i], "--hold") == 0) {
+            if (i + 1 < argc) {
+                hold_seconds = (int)strtol(argv[++i], NULL, 10);
+                if (hold_seconds < 0) hold_seconds = 0;
+            } else {
+                print_usage();
+                return 1;
+            }
+        } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            print_usage();
+            return 0;
+        }
+    }
 
     printf("Program developed by team 1, Wayne, Charlie, Havi\n");
 
@@ -89,11 +146,24 @@ int main(void) {
     // Note: requires "curl" available in PATH on Windows
     // Quote the output path to handle spaces in the folder name
     snprintf(cmd, sizeof(cmd), "curl -s \"%s\" -o \"%s\"", CSV_URL, CSV_FILE);
-    system(cmd);
+    int rc = system(cmd);
+    if (rc != 0) {
+        fprintf(stderr, "Warning: failed to download CSV (curl returned %d).\n", rc);
+        fprintf(stderr, "Continuing and attempting to read existing file: %s\n", CSV_FILE);
+    }
 
     FILE *f = fopen(CSV_FILE, "r");
     if (!f) {
         perror("fopen");
+        if (!no_pause) {
+            if (hold_seconds > 0) {
+                printf("\nHolding for %d seconds before exit...\n", hold_seconds);
+                fflush(stdout);
+                sleep_seconds(hold_seconds);
+            } else if (wait_enter || isatty(fileno(stdin))) {
+                wait_for_enter_if_console();
+            }
+        }
         return 1;
     }
 
@@ -116,7 +186,7 @@ int main(void) {
 
     int idx   = 1;
     int shown = 0;
-    const int MAX_SHOW = 30;   // show first 30 rows
+    const int MAX_SHOW = 100000;   // show first 30 rows
 
     while (fgets(line, LINE, f)) {
         col(c_time,  line, 0);   // time column
@@ -164,5 +234,14 @@ int main(void) {
         printf("No earthquakes with magnitude > 0.\n");
     }
 
+    if (!no_pause) {
+        if (hold_seconds > 0) {
+            printf("\nHolding for %d seconds before exit...\n", hold_seconds);
+            fflush(stdout);
+            sleep_seconds(hold_seconds);
+        } else if (wait_enter || isatty(fileno(stdin))) {
+            wait_for_enter_if_console();
+        }
+    }
     return 0;
 }
